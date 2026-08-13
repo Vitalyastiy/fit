@@ -361,7 +361,15 @@
   const APP_PASSWORD = 'train2026'; // поменяй на своё
   const UNLOCK_KEY = 'melok_unlocked';
 
-  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  // Важно: в этом проекте PostgREST по умолчанию смотрит схему `api`,
+  // а таблица лежит в `public` — явно указываем schema.
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    db: { schema: 'public' }
+  });
+
+  function sbErr(error){
+    return (error && (error.message || error.details || error.hint)) || 'неизвестная ошибка';
+  }
 
   async function fetchWorkouts(){
     const { data, error } = await sb.from('workouts').select('*').order('id', {ascending:false});
@@ -699,7 +707,8 @@
       toast('Тренировка сохранена 💪');
       switchView('dashboard');
     }catch(e){
-      toast('Не удалось сохранить — проверь соединение');
+      console.error('save workout failed', e);
+      toast('Не удалось сохранить: ' + sbErr(e));
     }finally{
       saveBtn.disabled = false;
     }
@@ -858,8 +867,9 @@
     try{
       workouts = await fetchWorkouts();
     }catch(e){
-      // 401 already redirects to login; other errors just show empty state
+      console.error('load workouts failed', e);
       workouts = [];
+      toast('Не удалось загрузить тренировки: ' + sbErr(e));
     }
     renderHeaderStats();
     renderDashboard();
