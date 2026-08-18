@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+melok.db
+.env
+.env.*
+.DS_Store
